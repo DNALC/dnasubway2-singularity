@@ -1,0 +1,33 @@
+Bootstrap: docker
+From: ubuntu:22.04
+
+%environment
+    export OUTPUT_NAME=${OUTPUT_NAME:-mysample}
+    export MODEL=${MODEL:-fast}
+    export KIT_NAME=${KIT_NAME:-SQK-RBK114-96}
+    export INPUT_DIR=pod5
+    export OUTPUT_DIR=output_fastq
+    export LINES_PER_CHUNK=4000
+
+%post
+    apt-get update && apt-get install -y \
+        gzip \
+        coreutils \
+        curl \
+        tar \
+        bash
+
+    # Install dorado manually
+    DORADO_VERSION="1.0.2"
+    DORADO_DIR="/opt/dorado-${DORADO_VERSION}"
+    mkdir -p "$DORADO_DIR"
+    curl -L -o /tmp/dorado.tar.gz https://cdn.oxfordnanoportal.com/software/analysis/dorado-${DORADO_VERSION}-linux-x64.tar.gz
+    tar -xzf /tmp/dorado.tar.gz -C "$DORADO_DIR" --strip-components=1
+    ln -s "$DORADO_DIR/bin/dorado" /usr/local/bin/dorado
+
+%files
+    run_pipeline.sh /usr/local/bin/run_pipeline.sh
+
+%runscript
+    exec /usr/local/bin/run_pipeline.sh
+
